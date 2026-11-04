@@ -1,0 +1,99 @@
+# Builds the browser version of Gnarcom from the PRIVATE source repository and
+# publishes ONLY the exported web files to GitHub Pages.
+#
+# - Runs only when started by hand (Actions tab -> "Publish Gnarcom Web" ->
+#   Run workflow), and only if you type PUBLISH.
+# - The private source is read with a read-only deploy key that works for
+#   drewmycroft-dev/Gnarcom alone (secret GNARCOM_SOURCE_DEPLOY_KEY). Nothing
+#   from it is committed here; only the build output is uploaded to Pages.
+# - Godot's export log stays on the runner (it would list source file names).
+
+name: Publish Gnarcom Web
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or full commit SHA of the private Gnarcom repo to build"
+        required: true
+        default: "main"
+      confirm:
+        description: "Type PUBLISH to make this build live"
+        required: true
+        default: ""
+
+# Nothing by default; each job asks for exactly what it needs.
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: ${{ inputs.confirm == 'PUBLISH' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out this deployment repo (build scripts only)
+        uses: actions/checkout@v4
+        with:
+          path: play
+          persist-credentials: false
+
+      - name: Check out the private Gnarcom source (read-only, no history)
+        uses: actions/checkout@v4
+        with:
+          repository: drewmycroft-dev/Gnarcom
+          ref: ${{ inputs.ref }}
+          ssh-key: ${{ secrets.GNARCOM_SOURCE_DEPLOY_KEY }}
+          path: src
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Cache Godot 4.7.2 (editor + web template)
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/godot
+          key: godot-4.7.2-web-v1
+
+      - name: Download Godot 4.7.2 (verified against pinned SHA-512)
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: play/build/get_godot.sh "$RUNNER_TEMP/godot"
+
+      - name: Export the web build
+        env:
+          GODOT_BIN: ${{ runner.temp }}/godot/Godot_v4.7.2-stable_linux.x86_64
+          GODOT_TEMPLATES: ${{ runner.temp }}/godot/templates
+        run: play/build/build_web.sh src "$RUNNER_TEMP/site/web"
+
+      - name: Stamp the build with its source commit, then drop the source
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          sha="$(git -C src rev-parse HEAD)"
+          printf '{"commit": "%s", "ref": "%s", "built": "%s", "run": %s}\n' \
+            "$sha" "$REF" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/site/web/build-info.json"
+          echo "Published source commit: \`$sha\` (ref \`$REF\`)" >> "$GITHUB_STEP_SUMMARY"
+          rm -rf src
+
+      - name: Upload the web build for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
