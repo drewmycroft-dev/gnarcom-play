@@ -1,0 +1,18 @@
+{
+  "releases": [
+    {
+      "version": "0.1.0",
+      "date": "2026-11-04",
+      "title": "The original prototype",
+      "commit": "ef9f80b6415db4f87fde22c7784f6e8631f793fd",
+      "web_asset": "gnarcom-0.1.0-web.zip",
+      "sha256": "0079d00e52092eab61d28df7165df7e5971eb26727cca6817416fa7a6cc83073",
+      "highlights": [
+        "5-minute 4v4 team deathmatch on a nighttime harbor: you and three SEAL bots against four insurgents",
+        "Four operators: Tactical Drew, Blair Davis (and Beaker), Tactical Gilly and TK, each with their own loadout",
+        "Suppressed rifles, an auto shotgun, a .44 Magnum, a 7 iron, an M203 and proximity claymores",
+        "Code-built PS2-style art and synthesized sound"
+      ]
+    }
+  ]
+}

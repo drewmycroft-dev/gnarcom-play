@@ -1,0 +1,70 @@
+# Publishes the Gnarcom website: a homepage plus every released version at
+# /releases/<version>/, each unpacked unchanged from that version's GitHub
+# release (gnarcom-<version>-web.zip, sha256 checked against releases.json).
+#
+# - Runs only when started by hand and only if you type PUBLISH.
+# - Nothing is built here and no private source is read: releases are built
+#   once, at release time, and kept as release files, so older versions are
+#   never rebuilt or replaced.
+
+name: Deploy Gnarcom site
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type PUBLISH to rebuild and publish the website"
+        required: true
+        default: ""
+
+# Nothing by default; each job asks for exactly what it needs.
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: ${{ inputs.confirm == 'PUBLISH' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out this repository (site tools and releases.json)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download each release's web build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/zips"
+          for v in $(python3 -c 'import json; print(" ".join(r["version"] for r in json.load(open("releases.json"))["releases"]))'); do
+            gh release download "v$v" -R "$GITHUB_REPOSITORY" -p "gnarcom-$v-web.zip" -D "$RUNNER_TEMP/zips"
+          done
+
+      - name: Assemble the site (checksums and file allowlist enforced)
+        run: |
+          python3 tools/make_site.py releases.json "$RUNNER_TEMP/zips" "$RUNNER_TEMP/site"
+          echo "Published versions: $(ls "$RUNNER_TEMP/site/releases" | tr '\n' ' ')" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the site for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
