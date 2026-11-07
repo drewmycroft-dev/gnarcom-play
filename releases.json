@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "0.2.0",
+      "date": "2026-11-07",
+      "title": "The realistic overhaul",
+      "commit": "bcf8214c2cf6ed91961d39c308a48c3fe67b30d4",
+      "web_asset": "gnarcom-0.2.0-web.zip",
+      "sha256": "1bbba158e09671f43f4501267057687fb541492effc47626029e9e45f1a1388b",
+      "highlights": [
+        "A redesigned harbor with a realistic, PS3-era look: Warehouse 4, the quay and gantry crane, the container yard, the cargo ship and both spawns are rebuilt with detailed materials, props and moody sodium-lit night lighting. The layout, cover and sight lines you know from 0.1 are the same.",
+        "All four operators are realistic soldiers with their own looks: Tactical Drew in his bucket hat and woodland camo, Blair Davis in a paint-spattered painter's cap and aviators with Beaker at his heel, Tactical Gilly in a wetsuit with laptops for armor and yellow rain boots, and TK with his welding mask, cameras and far too many pouches.",
+        "Every weapon is a realistic model: suppressed M4A1 and Glock, M4A1 with M203, auto shotgun, .44 Magnum, the 7 iron, MP5, suppressed 2011, claymores, and a new AK for the insurgents. They handle exactly as before.",
+        "New teammates and enemies: three different SEAL bots, and four different insurgents in civilian clothes, head wraps and chest rigs.",
+        "Graphics settings for every kind of computer: Low, Medium and High presets, render scale, shadows, anti-aliasing, detail and effects, fullscreen with F11, and sharp rendering at 1080p and above. On a GTX 1660 Ti laptop the game runs at about 100 fps at 1080p High in Chrome."
+      ]
+    },
+    {
       "version": "0.1.0",
       "date": "2026-11-04",
       "title": "The original prototype",
